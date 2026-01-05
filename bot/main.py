@@ -26,7 +26,10 @@ def _mask_dsn(dsn: str) -> str:
 
 
 async def main() -> None:
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
     logger.info(
         "Старт Telegram бота",
         extra={"database_url": _mask_dsn(settings.database_url), "webapp_url": settings.webapp_url},
