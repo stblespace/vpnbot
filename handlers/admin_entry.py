@@ -9,7 +9,11 @@ ADMIN_IDS = {
     if x.strip().isdigit()
 }
 
-ADMIN_WEBAPP_URL = os.getenv("ADMIN_WEBAPP_URL", "https://stabelspace.ru/app/admin.html")
+# Если URL не передан, добавляем query-параметр для сброса кэша Telegram WebApp
+_admin_url = os.getenv("ADMIN_WEBAPP_URL", "https://stabelspace.ru/app/admin.html")
+if "?" not in _admin_url:
+    _admin_url = f"{_admin_url}?v=4"
+ADMIN_WEBAPP_URL = _admin_url
 
 router = Router()
 
