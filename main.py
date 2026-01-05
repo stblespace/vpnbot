@@ -9,11 +9,12 @@ from redis.asyncio import Redis
 from dotenv import load_dotenv
 
 from handlers.main_menu import router as main_menu_router
+from handlers.admin_entry import router as admin_router
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN", "None")
-REDIS_HOST=os.getenv("REDIS_HOST", "localhost")
-REDIS_PORT=int(os.getenv("REDIS_PORT", 6379))
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 
 
 async def main() -> None:
@@ -30,8 +31,8 @@ async def main() -> None:
 
     dp = Dispatcher(storage=storage)
     dp.include_router(main_menu_router)
-    
-    
+    dp.include_router(admin_router)
+
     await dp.start_polling(bot)
 
 
