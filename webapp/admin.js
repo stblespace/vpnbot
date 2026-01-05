@@ -180,8 +180,7 @@ async function handleSave(e) {
   };
 
   if (!payload.short_id) {
-    showError("Short ID обязателен для Reality");
-    return;
+    payload.short_id = randomShortId();
   }
   if (!payload.sni) {
     showError("SNI обязателен для Reality");
@@ -299,3 +298,10 @@ serversTbody.addEventListener("click", handleTableClick);
 serversTbody.addEventListener("change", handleToggle);
 
 bootstrap();
+
+// Хэлпер для генерации short_id при пустом значении
+function randomShortId() {
+  const bytes = new Uint8Array(4);
+  (window.crypto || window.msCrypto).getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
