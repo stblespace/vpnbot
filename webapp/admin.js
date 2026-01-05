@@ -103,7 +103,7 @@ async function apiDeleteServer(id) {
 
 function renderServers() {
   if (!state.servers.length) {
-    serversTbody.innerHTML = `<tr><td colspan="9" class="muted">Серверов пока нет</td></tr>`;
+    serversTbody.innerHTML = `<tr><td colspan="10" class="muted">Серверов пока нет</td></tr>`;
     return;
   }
 
@@ -119,6 +119,7 @@ function renderServers() {
       <td>${srv.port}</td>
       <td>${srv.network}</td>
       <td>${srv.sni ?? "—"}</td>
+      <td>${srv.created_at ? new Date(srv.created_at).toLocaleString() : "—"}</td>
       <td>
         <label class="switch">
           <input type="checkbox" ${srv.enabled ? "checked" : ""} data-id="${srv.id}" class="toggle-enabled" />

@@ -57,10 +57,11 @@ backend/
 1. Подключитесь к БД (например, `psql`).
 2. Вставьте запись:
 ```sql
-INSERT INTO servers (country_code, host, port, protocol, network, public_key, sni, enabled)
-VALUES ('DE', 'de.example.com', 443, 'vless', 'tcp', '<PUBLIC_KEY>', 'de.example.com', true);
+INSERT INTO servers (country_code, name, host, port, protocol, network, public_key, sni, enabled)
+VALUES ('DE', 'Germany', 'de.example.com', 443, 'vless', 'tcp', '<PUBLIC_KEY>', 'de.example.com', true);
 ```
 3. Клиенты увидят новый сервер после очередного обновления подписки.
+4. Поле `created_at` заполняется автоматически (timezone aware). Если добавляете колонку в существующей БД — требуется миграция (TODO: alembic).
 
 ## Создание пользователя и подписки
 1. Создайте пользователя:
@@ -111,3 +112,9 @@ TODO: добавить проверку срока действия `auth_date` 
 - Фоновая задача раз в сутки деактивирует все истёкшие подписки.
 - Пользователь с `is_active=false` в Mini App получает статус `no_subscription`.
 - Серверы с `enabled=false` не попадают в подписку; если активных серверов нет, `/sub/{token}` вернет 403.
+
+## Админка (Mini App, admin.html)
+- Доступ только при `role=admin` (определяется через `/api/auth/telegram`).
+- CRUD по серверам через `/api/admin/servers`.
+- Поля сервера: `country_code`, `name`, `host`, `port`, `protocol`, `network`, `public_key`, `sni`, `enabled`, `created_at`.
+- Изменения серверов применяются мгновенно: новые `enabled=true` появляются в подписке, `enabled=false` исчезают; если нет активных серверов, `/sub/{token}` отдаст 403.

@@ -1,5 +1,5 @@
 """Модель сервера, доступного для подключения."""
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 
 from app.db import Base
 
@@ -17,3 +17,4 @@ class Server(Base):
     public_key = Column(String(255), nullable=False)
     sni = Column(String(255), nullable=True)
     enabled = Column(Boolean, nullable=False, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
