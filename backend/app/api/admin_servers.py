@@ -45,6 +45,7 @@ class ServerUpdate(BaseModel):
 
 class ServerResponse(ServerBase):
     id: int
+    short_id: str | None = None
     created_at: datetime | None = None
 
     class Config:

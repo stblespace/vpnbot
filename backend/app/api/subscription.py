@@ -32,4 +32,9 @@ async def get_subscription(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Нет активных серверов для выдачи конфигурации",
         )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
     return PlainTextResponse(payload, media_type="text/plain")
