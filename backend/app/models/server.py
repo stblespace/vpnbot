@@ -16,5 +16,6 @@ class Server(Base):
     network = Column(String(16), nullable=False)  # tcp | ws | xhttp
     public_key = Column(String(255), nullable=False)
     sni = Column(String(255), nullable=True)
+    short_id = Column(String(32), nullable=False, default="")  # Reality shortId
     enabled = Column(Boolean, nullable=False, default=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

@@ -11,14 +11,25 @@ class ConfigGenerator:
         """Собрать одну VLESS ссылку для конкретного сервера."""
         protocol = server.protocol or "vless"
         label = (server.country_code or server.host).upper()
+        if server.protocol != "vless":
+            raise ValueError("Поддерживается только VLESS")
+
         params = {
             "encryption": "none",
             "security": "reality",
-            "sni": server.sni or server.host,
             "fp": "chrome",
             "pbk": server.public_key,
             "type": server.network,
         }
+
+        # Для Reality обязательны sni и short_id
+        if not server.sni:
+            raise ValueError("SNI обязателен для Reality")
+        if not server.short_id:
+            raise ValueError("shortId обязателен для Reality")
+
+        params["sni"] = server.sni
+        params["sid"] = server.short_id
 
         if server.network == "ws":
             params["host"] = server.sni or server.host

@@ -146,6 +146,7 @@ function fillForm(server) {
   document.getElementById("network").value = server?.network ?? "tcp";
   document.getElementById("public_key").value = server?.public_key ?? "";
   document.getElementById("sni").value = server?.sni ?? "";
+  document.getElementById("short_id").value = server?.short_id ?? "";
   document.getElementById("enabled").checked = server?.enabled ?? true;
 }
 
@@ -174,6 +175,7 @@ async function handleSave(e) {
     network: document.getElementById("network").value,
     public_key: document.getElementById("public_key").value.trim(),
     sni: document.getElementById("sni").value.trim() || null,
+    short_id: document.getElementById("short_id").value.trim(),
     enabled: document.getElementById("enabled").checked,
   };
 

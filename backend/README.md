@@ -57,8 +57,8 @@ backend/
 1. Подключитесь к БД (например, `psql`).
 2. Вставьте запись:
 ```sql
-INSERT INTO servers (country_code, name, host, port, protocol, network, public_key, sni, enabled)
-VALUES ('DE', 'Germany', 'de.example.com', 443, 'vless', 'tcp', '<PUBLIC_KEY>', 'de.example.com', true);
+INSERT INTO servers (country_code, name, host, port, protocol, network, public_key, sni, short_id, enabled)
+VALUES ('DE', 'Germany', 'de.example.com', 443, 'vless', 'tcp', '<PUBLIC_KEY>', 'www.cloudflare.com', 'abcd', true);
 ```
 3. Клиенты увидят новый сервер после очередного обновления подписки.
 4. Поле `created_at` заполняется автоматически (timezone aware). Если добавляете колонку в существующей БД — требуется миграция (TODO: alembic).
@@ -87,6 +87,7 @@ VALUES (<USER_ID>, '<TOKEN>', NOW() + interval '30 days', true);
   - `GET /api/admin/servers`
   - `POST /api/admin/servers`
   - `PUT/PATCH/DELETE /api/admin/servers/{id}`
+  - Поля сервера: `country_code`, `name`, `host`, `port`, `protocol`, `network`, `public_key`, `sni`, `short_id`, `enabled`, `created_at`.
 
 TODO: добавить проверку срока действия `auth_date` из initData и полноценные миграции схемы.
 
@@ -116,5 +117,5 @@ TODO: добавить проверку срока действия `auth_date` 
 ## Админка (Mini App, admin.html)
 - Доступ только при `role=admin` (определяется через `/api/auth/telegram`).
 - CRUD по серверам через `/api/admin/servers`.
-- Поля сервера: `country_code`, `name`, `host`, `port`, `protocol`, `network`, `public_key`, `sni`, `enabled`, `created_at`.
+- Поля сервера: `country_code`, `name`, `host`, `port`, `protocol`, `network`, `public_key`, `sni`, `short_id`, `enabled`, `created_at`.
 - Изменения серверов применяются мгновенно: новые `enabled=true` появляются в подписке, `enabled=false` исчезают; если нет активных серверов, `/sub/{token}` отдаст 403.

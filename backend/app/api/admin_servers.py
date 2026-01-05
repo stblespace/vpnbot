@@ -22,6 +22,7 @@ class ServerBase(BaseModel):
     network: str
     public_key: str
     sni: str | None = None
+    short_id: str = Field(..., min_length=1, max_length=32)
     protocol: str = "vless"
     enabled: bool = True
 
