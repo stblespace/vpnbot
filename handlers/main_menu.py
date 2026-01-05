@@ -1,3 +1,4 @@
+import logging
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
@@ -7,14 +8,21 @@ from datetime import datetime, timedelta
 from keyboards import *
 from fsm.user_state import UserMenuState
 from messages import *
-from services.db import init_db, get_latest_subscription, create_subscription, get_subscription_by_id, days_left
+from services.pg_repo import (
+    AsyncSessionLocal,
+    create_or_extend_subscription,
+    days_left,
+    get_latest_subscription,
+    get_subscription_by_id,
+)
 
 router = Router()
-init_db()
+logger = logging.getLogger(__name__)
 
 
-def _subscription_context(user_id: int) -> tuple:
-    existing = get_latest_subscription(user_id)
+async def _subscription_context(user_id: int) -> tuple:
+    async with AsyncSessionLocal() as session:
+        existing = await get_latest_subscription(session, user_id)
     if existing:
         sub_id = str(existing["id"])
         days = days_left(existing["expires_at"])
@@ -28,8 +36,11 @@ def _expiry_from_period(period_code: str) -> datetime:
     return datetime.utcnow() + timedelta(days=days)
 
 
-def _subscription_detail_payload(subscription_id: str) -> tuple:
-    record = get_subscription_by_id(int(subscription_id)) if subscription_id.isdigit() else None
+async def _subscription_detail_payload(subscription_id: str) -> tuple:
+    record = None
+    if subscription_id.isdigit():
+        async with AsyncSessionLocal() as session:
+            record = await get_subscription_by_id(session, int(subscription_id))
     if record:
         days = days_left(record["expires_at"]) or 0
         plan_text = plan_label(record["plan_code"])
@@ -78,7 +89,7 @@ async def inline_menu_handler(callback: CallbackQuery, state: FSMContext) -> Non
 
     if action == "vpn_panel":
         await state.set_state(UserMenuState.vpn_panel)
-        _, sub_id, days_left_value = _subscription_context(callback.from_user.id)
+        _, sub_id, days_left_value = await _subscription_context(callback.from_user.id)
         await callback.message.edit_text(
             VPN_PANEL_TEXT,
             reply_markup=vpn_panel_kb(sub_id, days_left_value),
@@ -107,7 +118,7 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
     if action.startswith("active:"):
         subscription_id = action.split(":", maxsplit=1)[1] or DEFAULT_SUBSCRIPTION_ID
         await state.set_state(UserMenuState.subscription)
-        plan_text, days_value = _subscription_detail_payload(subscription_id)
+        plan_text, days_value = await _subscription_detail_payload(subscription_id)
         await callback.answer()
         await callback.message.edit_text(
             format_subscription_detail_text(
@@ -123,7 +134,7 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
     elif action == "back_list":
         await state.set_state(UserMenuState.vpn_panel)
         await callback.answer()
-        _, sub_id, days_left_value = _subscription_context(callback.from_user.id)
+        _, sub_id, days_left_value = await _subscription_context(callback.from_user.id)
         await callback.message.edit_text(
             VPN_PANEL_TEXT,
             reply_markup=vpn_panel_kb(sub_id, days_left_value),
@@ -212,12 +223,16 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
         meta = get_period_meta(period_code)
         price = meta.get("price_value", 0)
         expires = _expiry_from_period(period_code)
-        record = create_subscription(
-            user_id=callback.from_user.id,
-            plan_code=plan_code,
-            period_code=period_code,
-            price=price,
-            expires_at=expires,
+        async with AsyncSessionLocal() as session:
+            record = await create_or_extend_subscription(session, callback.from_user.id, expires_at=expires)
+        logger.info(
+            "Подписка оформлена через меню",
+            extra={
+                "tg_id": callback.from_user.id,
+                "subscription_id": record["id"],
+                "token_prefix": record["token"][:6],
+                "expires_at": record["expires_at"],
+            },
         )
         remaining_days = days_left(record["expires_at"]) or 0
         remaining_hours = max(0, int((expires - datetime.utcnow()).total_seconds() // 3600))

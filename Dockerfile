@@ -10,5 +10,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Запускаем Telegram-бота
-CMD ["python", "-m", "bot.main"]
+# Запускаем Telegram-бота (основной файл с меню)
+CMD ["python", "main.py"]
