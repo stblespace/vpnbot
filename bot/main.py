@@ -30,6 +30,7 @@ async def main() -> None:
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
+    logging.getLogger("aiogram").setLevel(logging.INFO)
     logger.info(
         "Старт Telegram бота",
         extra={"database_url": _mask_dsn(settings.database_url), "webapp_url": settings.webapp_url},

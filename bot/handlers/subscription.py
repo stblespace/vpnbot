@@ -29,20 +29,36 @@ async def open_cabinet(message: types.Message) -> None:
 
 @router.message(lambda m: m.text == "Оформить подписку")
 async def create_subscription(message: types.Message) -> None:
-    async with AsyncSessionLocal() as session:
-        user_service = UserService(session)
-        sub_service = SubscriptionService(session)
+    tg_id = message.from_user.id
+    try:
+        async with AsyncSessionLocal() as session:
+            user_service = UserService(session)
+            sub_service = SubscriptionService(session)
 
-        user = await user_service.get_or_create_user(message.from_user.id)
-        subscription = await sub_service.create_or_extend(user, days=30)
-        link = sub_service.build_subscription_url(subscription.token)
+            user = await user_service.get_or_create_user(tg_id)
+            subscription = await sub_service.create_or_extend(user, days=30)
+            link = sub_service.build_subscription_url(subscription.token)
 
-    await message.answer(
-        f"✅ Подписка активирована на 30 дней.\n"
-        f"ID: {subscription.id}\n"
-        f"Ссылка подписки: {link}\n\n"
-        f"Добавь её в приложение или открой личный кабинет.",
-        reply_markup=webapp_kb(),
-    )
+        logger.info(
+            "Подписка оформлена через бота",
+            extra={
+                "tg_id": tg_id,
+                "user_id": user.id,
+                "subscription_id": subscription.id,
+                "token_prefix": subscription.token[:6],
+                "expires_at": subscription.expires_at.isoformat(),
+            },
+        )
+
+        await message.answer(
+            f"✅ Подписка активирована на 30 дней.\n"
+            f"ID: {subscription.id}\n"
+            f"Ссылка подписки: {link}\n\n"
+            f"Добавь её в приложение или открой личный кабинет.",
+            reply_markup=webapp_kb(),
+        )
+    except Exception as exc:  # логируем любые падения
+        logger.exception("Ошибка оформления подписки", extra={"tg_id": tg_id})
+        await message.answer("Не удалось оформить подписку, попробуйте позже.")
 
     # TODO: добавить платежную логику и выбор тарифов
