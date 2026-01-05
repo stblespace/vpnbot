@@ -179,6 +179,19 @@ async function handleSave(e) {
     enabled: document.getElementById("enabled").checked,
   };
 
+  if (!payload.short_id) {
+    showError("Short ID обязателен для Reality");
+    return;
+  }
+  if (!payload.sni) {
+    showError("SNI обязателен для Reality");
+    return;
+  }
+  if (!payload.host || !payload.port || !payload.public_key) {
+    showError("Заполните host, port и public_key");
+    return;
+  }
+
   try {
     if (state.editingId) {
       await apiUpdateServer(state.editingId, payload);
