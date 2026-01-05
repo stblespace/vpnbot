@@ -1,4 +1,5 @@
 import logging
+import os
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
@@ -18,6 +19,7 @@ from services.pg_repo import (
 
 router = Router()
 logger = logging.getLogger(__name__)
+BASE_SUB_URL = os.getenv("BASE_SUB_URL", "https://stabelspace.ru/sub").rstrip("/")
 
 
 async def _subscription_context(user_id: int) -> tuple:
@@ -43,11 +45,14 @@ async def _subscription_detail_payload(subscription_id: str) -> tuple:
             record = await get_subscription_by_id(session, int(subscription_id))
     if record:
         days = days_left(record["expires_at"]) or 0
-        plan_text = plan_label(record["plan_code"])
+        plan_code = record.get("plan_code", "ind")
+        plan_text = plan_label(plan_code) if callable(plan_label) else plan_code
+        link = f"{BASE_SUB_URL}/{record.get('token')}"
     else:
         days = DEFAULT_SUBSCRIPTION_DAYS_LEFT
         plan_text = DEFAULT_SUBSCRIPTION_PLAN
-    return plan_text, days
+        link = DEFAULT_SUBSCRIPTION_LINK
+    return plan_text, days, link
 
 
 async def send_banner_or_stub(message: Message) -> None:
@@ -118,14 +123,14 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
     if action.startswith("active:"):
         subscription_id = action.split(":", maxsplit=1)[1] or DEFAULT_SUBSCRIPTION_ID
         await state.set_state(UserMenuState.subscription)
-        plan_text, days_value = await _subscription_detail_payload(subscription_id)
+        plan_text, days_value, link_value = await _subscription_detail_payload(subscription_id)
         await callback.answer()
         await callback.message.edit_text(
             format_subscription_detail_text(
                 subscription_id=subscription_id,
                 days_left=days_value,
                 plan=plan_text,
-                link=DEFAULT_SUBSCRIPTION_LINK,
+                link=link_value,
             ),
             reply_markup=subscription_detail_kb(subscription_id),
         )
@@ -256,14 +261,14 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
     elif action.startswith("back_detail:"):
         subscription_id = action.split(":", maxsplit=1)[1] or DEFAULT_SUBSCRIPTION_ID
         await state.set_state(UserMenuState.subscription)
-        plan_text, days_value = _subscription_detail_payload(subscription_id)
+        plan_text, days_value, link_value = await _subscription_detail_payload(subscription_id)
         await callback.answer()
         await callback.message.edit_text(
             format_subscription_detail_text(
                 subscription_id=subscription_id,
                 days_left=days_value,
                 plan=plan_text,
-                link=DEFAULT_SUBSCRIPTION_LINK,
+                link=link_value,
             ),
             reply_markup=subscription_detail_kb(subscription_id),
         )
