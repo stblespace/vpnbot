@@ -1,5 +1,6 @@
 """Админские эндпоинты для CRUD по серверам."""
 import logging
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,7 +44,7 @@ class ServerUpdate(BaseModel):
 
 class ServerResponse(ServerBase):
     id: int
-    created_at: str | None = None
+    created_at: datetime | None = None
 
     class Config:
         from_attributes = True
