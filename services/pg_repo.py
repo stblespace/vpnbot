@@ -73,6 +73,7 @@ def _subscription_to_dict(sub: Subscription) -> dict:
         "token": sub.token,
         "expires_at": sub.expires_at.isoformat(),
         "is_active": sub.is_active,
+        "plan_code": "ind",  # базовый план для фронта
     }
 
 
@@ -100,6 +101,11 @@ async def get_subscription_by_id(session: AsyncSession, subscription_id: int) ->
 
 
 async def create_or_extend_subscription(session: AsyncSession, tg_id: int, expires_at: datetime) -> dict:
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    else:
+        expires_at = expires_at.astimezone(timezone.utc)
+
     user = await ensure_user(session, tg_id)
     stmt = (
         select(Subscription)
