@@ -53,7 +53,7 @@ async function apiCreateServer(payload) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось создать сервер");
+    throw new Error(text || `Не удалось создать сервер (HTTP ${res.status})`);
   }
   return res.json();
 }
@@ -69,7 +69,7 @@ async function apiUpdateServer(id, payload) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось обновить сервер");
+    throw new Error(text || `Не удалось обновить сервер (HTTP ${res.status})`);
   }
   return res.json();
 }
@@ -85,7 +85,7 @@ async function apiPatchServer(id, payload) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось обновить сервер");
+    throw new Error(text || `Не удалось обновить сервер (HTTP ${res.status})`);
   }
   return res.json();
 }
@@ -189,6 +189,7 @@ async function handleSave(e) {
     await loadServers();
   } catch (err) {
     showError(err.message || "Ошибка сохранения");
+    console.error("Ошибка сохранения сервера", err);
   }
 }
 
