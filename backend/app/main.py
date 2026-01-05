@@ -1,0 +1,35 @@
+"""Точка входа FastAPI-приложения."""
+import logging
+
+from fastapi import FastAPI
+
+from app.api.admin_servers import router as admin_servers_router
+from app.api.auth import router as auth_router
+from app.api.client import router as client_router
+from app.api.subscription import router as subscription_router
+from app.config import settings
+from app.db import init_db
+
+
+def configure_logging() -> None:
+    level = getattr(logging, settings.log_level.upper(), logging.INFO)
+    logging.basicConfig(level=level)
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(title="VPN Subscription Backend", docs_url="/docs", openapi_url="/openapi.json")
+
+    @app.on_event("startup")
+    async def on_startup() -> None:  # noqa: D401
+        """Создаем таблицы и включаем логирование при запуске."""
+        configure_logging()
+        await init_db()
+
+    app.include_router(subscription_router)
+    app.include_router(auth_router)
+    app.include_router(client_router)
+    app.include_router(admin_servers_router)
+    return app
+
+
+app = create_app()

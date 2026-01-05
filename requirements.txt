@@ -1,0 +1,19 @@
+# Telegram bot
+aiogram==3.4.1
+
+# Redis (FSM storage)
+redis==5.0.1
+
+# Async database (PostgreSQL)
+SQLAlchemy==2.0.25
+asyncpg==0.29.0
+
+# Settings / config
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Env vars
+python-dotenv==1.0.0
+
+# Logging helpers (optional but recommended)
+loguru==0.7.2

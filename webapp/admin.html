@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VPN Admin Panel</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="header admin-header">
+      <div class="logo">ADM</div>
+      <div class="title">Admin panel</div>
+      <div class="spacer"></div>
+      <button class="action-btn" id="back-btn">К клиенту</button>
+    </header>
+
+    <section class="card" id="access-card" hidden>
+      <div class="card-header">
+        <div class="label">Доступ</div>
+      </div>
+      <div class="card-body">
+        <div class="value" id="access-message">Проверка прав...</div>
+      </div>
+    </section>
+
+    <section class="card" id="servers-card">
+      <div class="card-header">
+        <div>
+          <div class="label">Серверы</div>
+          <div class="value small">Управление точками подключения</div>
+        </div>
+        <button class="action-btn secondary" id="refresh-btn">Обновить</button>
+      </div>
+      <div class="card-body">
+        <div class="table-wrapper">
+          <table class="server-table" id="servers-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Страна</th>
+                <th>Имя</th>
+                <th>Хост</th>
+                <th>Порт</th>
+                <th>Сеть</th>
+                <th>SNI</th>
+                <th>Вкл</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="servers-tbody">
+              <tr><td colspan="9" class="muted">Загрузка...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="form-card">
+      <div class="card-header">
+        <div class="label" id="form-title">Новый сервер</div>
+      </div>
+      <div class="card-body">
+        <form id="server-form" class="form-grid">
+          <input type="hidden" id="server-id" />
+
+          <label>
+            <span>Код страны *</span>
+            <input type="text" id="country_code" maxlength="8" required />
+          </label>
+
+          <label>
+            <span>Имя</span>
+            <input type="text" id="name" maxlength="255" />
+          </label>
+
+          <label>
+            <span>Хост *</span>
+            <input type="text" id="host" required />
+          </label>
+
+          <label>
+            <span>Порт *</span>
+            <input type="number" id="port" min="1" max="65535" required />
+          </label>
+
+          <label>
+            <span>Сеть *</span>
+            <select id="network" required>
+              <option value="tcp">tcp</option>
+              <option value="ws">ws</option>
+              <option value="xhttp">xhttp</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Public key *</span>
+            <textarea id="public_key" rows="2" required></textarea>
+          </label>
+
+          <label>
+            <span>SNI</span>
+            <input type="text" id="sni" />
+          </label>
+
+          <label class="checkbox">
+            <input type="checkbox" id="enabled" checked />
+            <span>Активировать сервер</span>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" class="action-btn" id="save-btn">Сохранить</button>
+            <button type="button" class="action-btn secondary" id="cancel-btn">Сбросить</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
