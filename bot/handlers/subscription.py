@@ -1,4 +1,6 @@
 """Обработчики оформления подписки и открытия мини-приложения."""
+import logging
+
 from aiogram import Router, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
@@ -8,6 +10,7 @@ from bot.services.subscription_service import SubscriptionService
 from bot.services.user_service import UserService
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 
 def webapp_kb() -> InlineKeyboardMarkup:
@@ -20,6 +23,7 @@ def webapp_kb() -> InlineKeyboardMarkup:
 
 @router.message(lambda m: m.text == "Личный кабинет")
 async def open_cabinet(message: types.Message) -> None:
+    logger.info("Открытие личного кабинета", extra={"tg_id": message.from_user.id})
     await message.answer("Открываем личный кабинет:", reply_markup=webapp_kb())
 
 

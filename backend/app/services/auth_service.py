@@ -2,6 +2,7 @@
 import hashlib
 import hmac
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
@@ -11,6 +12,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User
+
+logger = logging.getLogger(__name__)
 
 
 class AuthError(Exception):
@@ -40,6 +43,7 @@ class AuthService:
             raise AuthError("Пользователь деактивирован")
 
         role = await self._resolve_role(user)
+        logger.info("Аутентификация Telegram WebApp", extra={"tg_id": tg_id, "role": role})
         return AuthResult(user=user, role=role)
 
     def _validate_signature(self, init_data: str) -> dict[str, str]:
@@ -81,12 +85,14 @@ class AuthService:
         result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
         if user:
+            logger.info("Пользователь найден", extra={"tg_id": tg_id, "user_id": user.id})
             return user
 
         user = User(tg_id=tg_id)
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)
+        logger.info("Пользователь создан", extra={"tg_id": tg_id, "user_id": user.id})
         return user
 
     async def _resolve_role(self, user: User) -> str:

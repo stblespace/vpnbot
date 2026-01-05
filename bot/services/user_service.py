@@ -1,4 +1,5 @@
 """Работа с пользователями."""
+import logging
 import uuid as uuid_pkg
 
 from sqlalchemy import BigInteger, Boolean, select, String
@@ -6,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from bot.db.session import Base
+
+logger = logging.getLogger(__name__)
 
 
 class User(Base):
@@ -27,10 +30,12 @@ class UserService:
         result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
         if user:
+            logger.info("Пользователь найден", extra={"tg_id": tg_id, "user_id": user.id})
             return user
 
         user = User(tg_id=tg_id)
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)
+        logger.info("Пользователь создан", extra={"tg_id": tg_id, "user_id": user.id})
         return user

@@ -1,5 +1,6 @@
 """Точка входа FastAPI-приложения."""
 import logging
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI
 
@@ -10,10 +11,25 @@ from app.api.subscription import router as subscription_router
 from app.config import settings
 from app.db import init_db
 
+logger = logging.getLogger(__name__)
+
+
+def _mask_dsn(dsn: str) -> str:
+    parsed = urlsplit(dsn)
+    if "@" not in dsn:
+        return dsn
+    netloc = parsed.netloc
+    if "@" in netloc and ":" in netloc.split("@")[0]:
+        user_part, host_part = netloc.split("@", 1)
+        user = user_part.split(":")[0]
+        netloc = f"{user}:***@{host_part}"
+    return parsed._replace(netloc=netloc).geturl()
+
 
 def configure_logging() -> None:
     level = getattr(logging, settings.log_level.upper(), logging.INFO)
     logging.basicConfig(level=level)
+    logger.info("Логирование настроено", extra={"log_level": settings.log_level})
 
 
 def create_app() -> FastAPI:
@@ -23,7 +39,9 @@ def create_app() -> FastAPI:
     async def on_startup() -> None:  # noqa: D401
         """Создаем таблицы и включаем логирование при запуске."""
         configure_logging()
+        logger.info("Старт backend", extra={"database_url": _mask_dsn(settings.database_url)})
         await init_db()
+        logger.info("Инициализация БД завершена")
 
     app.include_router(subscription_router)
     app.include_router(auth_router)

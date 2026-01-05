@@ -1,8 +1,9 @@
 """Создание и продление подписок через бота."""
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from sqlalchemy import DateTime, Boolean, select
+from sqlalchemy import Boolean, DateTime, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -10,6 +11,8 @@ from bot.config import settings
 from bot.db.session import Base
 from bot.services.token_generator import generate_token
 from bot.services.user_service import User
+
+logger = logging.getLogger(__name__)
 
 
 class Subscription(Base):
@@ -33,7 +36,12 @@ class SubscriptionService:
             .order_by(Subscription.expires_at.desc())
         )
         result = await self.session.execute(stmt)
-        return result.scalars().first()
+        sub = result.scalars().first()
+        logger.info(
+            "Получена последняя подписка пользователя",
+            extra={"user_id": user_id, "subscription_id": getattr(sub, 'id', None)},
+        )
+        return sub
 
     async def create_or_extend(self, user: User, days: int = 30) -> Subscription:
         now = datetime.now(timezone.utc)
@@ -44,6 +52,10 @@ class SubscriptionService:
             existing.expires_at = expires_at
             existing.is_active = True
             subscription = existing
+            logger.info(
+                "Продление подписки",
+                extra={"subscription_id": subscription.id, "user_id": user.id, "expires_at": expires_at.isoformat()},
+            )
         else:
             subscription = Subscription(
                 user_id=user.id,
@@ -52,6 +64,15 @@ class SubscriptionService:
                 is_active=True,
             )
             self.session.add(subscription)
+            logger.info(
+                "Создана подписка",
+                extra={
+                    "subscription_id": None,
+                    "user_id": user.id,
+                    "expires_at": expires_at.isoformat(),
+                    "token_prefix": subscription.token[:6],
+                },
+            )
 
         await self.session.commit()
         await self.session.refresh(subscription)
