@@ -14,6 +14,7 @@ class AuthContext:
     user_id: int
     tg_id: int
     role: str
+    is_active: bool
 
 
 async def get_auth_context(
@@ -28,7 +29,12 @@ async def get_auth_context(
         result: AuthResult = await service.authenticate(init_data)
     except AuthError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
-    return AuthContext(user_id=result.user.id, tg_id=result.user.tg_id, role=result.role)
+    return AuthContext(
+        user_id=result.user.id,
+        tg_id=result.user.tg_id,
+        role=result.role,
+        is_active=result.is_active,
+    )
 
 
 async def require_admin(context: AuthContext = Depends(get_auth_context)) -> AuthContext:

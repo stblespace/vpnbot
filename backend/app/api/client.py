@@ -27,10 +27,13 @@ async def my_subscription(
 ) -> SubscriptionInfo:
     """Вернуть состояние подписки для текущего пользователя."""
     service = SubscriptionService(session)
+    if not auth.is_active:
+        return SubscriptionInfo(status="no_subscription")
+
     subscription = await service.get_latest_subscription_for_user(auth.user_id)
 
     if not subscription:
-        return SubscriptionInfo(status="inactive")
+        return SubscriptionInfo(status="no_subscription")
 
     now = datetime.now(timezone.utc)
     is_expired = subscription.is_expired(now) or not subscription.is_active

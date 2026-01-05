@@ -22,9 +22,14 @@ async def get_subscription(
     service = SubscriptionService(session)
     try:
         payload = await service.build_subscription_payload(token)
-    except (SubscriptionUnavailable, NoActiveServers):
+    except SubscriptionUnavailable:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Подписка недоступна или истекла",
+        )
+    except NoActiveServers:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Нет активных серверов для выдачи конфигурации",
         )
     return PlainTextResponse(payload, media_type="text/plain")

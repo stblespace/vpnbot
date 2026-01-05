@@ -1,4 +1,5 @@
 """Точка входа FastAPI-приложения."""
+import asyncio
 import logging
 from urllib.parse import urlsplit
 
@@ -10,6 +11,7 @@ from app.api.client import router as client_router
 from app.api.subscription import router as subscription_router
 from app.config import settings
 from app.db import init_db
+from app.services.cleanup_service import expired_subscriptions_loop
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,8 @@ def create_app() -> FastAPI:
         logger.info("Старт backend", extra={"database_url": _mask_dsn(settings.database_url)})
         await init_db()
         logger.info("Инициализация БД завершена")
+        # Фоновая задача: ежедневная деактивация истекших подписок
+        asyncio.create_task(expired_subscriptions_loop())
 
     app.include_router(subscription_router)
     app.include_router(auth_router)

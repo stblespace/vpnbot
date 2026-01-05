@@ -24,6 +24,7 @@ class AuthError(Exception):
 class AuthResult:
     user: User
     role: str
+    is_active: bool
 
 
 class AuthService:
@@ -39,12 +40,12 @@ class AuthService:
         tg_id = self._extract_tg_id(user_payload)
 
         user = await self._get_or_create_user(tg_id)
-        if not user.is_active:
-            raise AuthError("Пользователь деактивирован")
-
         role = await self._resolve_role(user)
-        logger.info("Аутентификация Telegram WebApp", extra={"tg_id": tg_id, "role": role})
-        return AuthResult(user=user, role=role)
+        logger.info(
+            "Аутентификация Telegram WebApp",
+            extra={"tg_id": tg_id, "role": role, "is_active": user.is_active},
+        )
+        return AuthResult(user=user, role=role, is_active=user.is_active)
 
     def _validate_signature(self, init_data: str) -> dict[str, str]:
         """Подпись согласно https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app."""
