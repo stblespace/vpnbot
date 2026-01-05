@@ -4,6 +4,9 @@ import logging
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from app.api.admin_servers import router as admin_servers_router
 from app.api.auth import router as auth_router
@@ -36,6 +39,16 @@ def configure_logging() -> None:
 
 def create_app() -> FastAPI:
     app = FastAPI(title="VPN Subscription Backend", docs_url="/docs", openapi_url="/openapi.json")
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+        # Логируем 422 с телом запроса и списком ошибок для быстрого дебага админских форм
+        body = await request.body()
+        logger.warning(
+            "Ошибка валидации запроса",
+            extra={"path": request.url.path, "errors": exc.errors(), "body": body.decode(errors="ignore")},
+        )
+        return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
     @app.on_event("startup")
     async def on_startup() -> None:  # noqa: D401
