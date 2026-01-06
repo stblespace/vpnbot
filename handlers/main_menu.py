@@ -12,6 +12,7 @@ from messages import *
 from services.pg_repo import (
     AsyncSessionLocal,
     create_or_extend_subscription,
+    days_left,
 )
 from services.backend_api import safe_fetch_subscription
 
