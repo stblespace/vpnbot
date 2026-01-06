@@ -1,12 +1,14 @@
 """Точка входа FastAPI-приложения."""
 import asyncio
 import logging
+from pathlib import Path
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+from starlette.staticfiles import StaticFiles
 
 from app.api.admin_servers import router as admin_servers_router
 from app.api.auth import router as auth_router
@@ -39,6 +41,7 @@ def configure_logging() -> None:
 
 def create_app() -> FastAPI:
     app = FastAPI(title="VPN Subscription Backend", docs_url="/docs", openapi_url="/openapi.json")
+    static_dir = Path(__file__).resolve().parent.parent / "webapp"
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
@@ -64,6 +67,9 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(client_router)
     app.include_router(admin_servers_router)
+    if static_dir.exists():
+        # Раздаем mini-app статику (index.html, admin.html и ассеты)
+        app.mount("/", StaticFiles(directory=static_dir, html=True), name="webapp")
     return app
 
 

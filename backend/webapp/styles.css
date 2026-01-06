@@ -1,0 +1,228 @@
+:root {
+  --bg: linear-gradient(135deg, #0f1624 0%, #17263b 100%);
+  --card-bg: rgba(255, 255, 255, 0.06);
+  --text: #e6edf3;
+  --muted: #96a1b2;
+  --accent: #6dd3ff;
+  --accent-strong: #42b0ff;
+  --danger: #ff6b6b;
+  --success: #7ae582;
+  --border: rgba(255, 255, 255, 0.1);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  --radius: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", "SF Pro Display", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px 32px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #42b0ff, #6dd3ff);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #0f1624;
+  box-shadow: var(--shadow);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-body {
+  margin-top: 12px;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.value {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.badge.active {
+  color: var(--success);
+  border-color: rgba(122, 229, 130, 0.6);
+}
+
+.badge.inactive, .badge.expired {
+  color: var(--danger);
+  border-color: rgba(255, 107, 107, 0.6);
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.link-block {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.link-block input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.link-block button {
+  padding: 12px 14px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #42b0ff, #6dd3ff);
+  color: #0f1624;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.link-block button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.link-block button:active {
+  transform: translateY(1px);
+}
+
+.actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.action-btn {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.2s ease;
+}
+
+.action-btn:hover {
+  border-color: rgba(109, 211, 255, 0.5);
+}
+
+.action-btn:active {
+  transform: translateY(1px);
+}
+
+.action-btn.secondary {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.tab.active {
+  border-color: rgba(109, 211, 255, 0.7);
+  background: rgba(109, 211, 255, 0.1);
+}
+
+.tab-content {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.error {
+  color: var(--danger);
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 16px 12px 24px;
+  }
+
+  .tabs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
