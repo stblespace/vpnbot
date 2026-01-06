@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vpn_user
+      POSTGRES_PASSWORD: vpn_pass
+      POSTGRES_DB: vpn_subscriptions
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    env_file:
+      - ../../backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - internal
+
+  nginx:
+    image: nginx:stable
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../backend/webapp:/usr/share/nginx/html/app:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./acme-webroot:/var/www/letsencrypt
+    restart: unless-stopped
+    networks:
+      - edge
+      - internal
+
+volumes:
+  db_data:
+
+networks:
+  edge:
+  internal:
