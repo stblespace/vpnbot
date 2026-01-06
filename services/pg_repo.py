@@ -4,6 +4,7 @@ import os
 import secrets
 import uuid as uuid_module
 from datetime import datetime, timezone
+from datetime import timedelta
 from typing import Optional
 
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, select
@@ -105,10 +106,16 @@ async def get_subscription_by_id(session: AsyncSession, subscription_id: int) ->
 
 
 async def create_or_extend_subscription(session: AsyncSession, tg_id: int, expires_at: datetime) -> dict:
+    """Создать или продлить подписку, сохраняя остаток периода."""
+    now = _now_utc()
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
     else:
         expires_at = expires_at.astimezone(timezone.utc)
+
+    period_delta = expires_at - now
+    if period_delta.total_seconds() < 0:
+        period_delta = timedelta(0)
 
     user = await ensure_user(session, tg_id)
     stmt = (
@@ -120,15 +127,21 @@ async def create_or_extend_subscription(session: AsyncSession, tg_id: int, expir
     sub = result.scalars().first()
 
     if sub:
-        sub.expires_at = expires_at
+        base_expires = sub.expires_at
+        if base_expires.tzinfo is None:
+            base_expires = base_expires.replace(tzinfo=timezone.utc)
+        target_start = base_expires if base_expires > now else now
+        new_expires_at = target_start + period_delta
+        sub.expires_at = new_expires_at
         sub.is_active = True
         action = "extend"
     else:
         token = secrets.token_urlsafe(32)
+        new_expires_at = now + period_delta
         sub = Subscription(
             user_id=user.id,
             token=token,
-            expires_at=expires_at,
+            expires_at=new_expires_at,
             is_active=True,
         )
         session.add(sub)

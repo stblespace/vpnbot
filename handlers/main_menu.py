@@ -4,7 +4,7 @@ from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from keyboards import *
 from fsm.user_state import UserMenuState
@@ -222,9 +222,9 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
         user_subscription_id = parts[3] if len(parts) > 3 else DEFAULT_SUBSCRIPTION_ID
         meta = get_period_meta(period_code)
         price = meta.get("price_value", 0)
-        expires = _expiry_from_period(period_code)
+        expires_candidate = _expiry_from_period(period_code)
         async with AsyncSessionLocal() as session:
-            record = await create_or_extend_subscription(session, callback.from_user.id, expires_at=expires)
+            record = await create_or_extend_subscription(session, callback.from_user.id, expires_at=expires_candidate)
         logger.info(
             "Подписка оформлена через меню",
             extra={
@@ -234,13 +234,19 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
                 "expires_at": record["expires_at"],
             },
         )
+        record_expires_raw = datetime.fromisoformat(record["expires_at"])
+        record_expires = (
+            record_expires_raw.replace(tzinfo=timezone.utc)
+            if record_expires_raw.tzinfo is None
+            else record_expires_raw.astimezone(timezone.utc)
+        )
         remaining_days = days_left(record["expires_at"]) or 0
-        remaining_hours = max(0, int((expires - datetime.utcnow()).total_seconds() // 3600))
+        remaining_hours = max(0, int((record_expires - datetime.now(timezone.utc)).total_seconds() // 3600))
         remaining_text = f"{remaining_days} дн {remaining_hours % 24} ч"
         await state.set_state(UserMenuState.subscription)
         await callback.answer("Баланс пополнен на {:.2f} RUB".format(price), show_alert=True)
         await callback.message.answer(
-            format_payment_success_text(str(record["id"]), expires.strftime("%d.%m.%y %H:%M (MSK)"), remaining_text),
+            format_payment_success_text(str(record["id"]), record_expires.strftime("%d.%m.%y %H:%M (MSK)"), remaining_text),
             reply_markup=subscription_detail_kb(str(record["id"])),
         )
     elif action.startswith("pay_card:") or action.startswith("pay_usdt:") or action.startswith("pay_bonus:") or action.startswith("pay_tstars:"):
