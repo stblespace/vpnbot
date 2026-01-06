@@ -76,19 +76,29 @@ def back_to_main_kb() -> InlineKeyboardMarkup:
     )
 
 
-def vpn_panel_kb(subscription_id: str, days_left: int | None = None) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
+def vpn_panel_kb(status: str, subscription_id: str, days_left: int | None = None) -> InlineKeyboardMarkup:
+    """Клавиатура строится строго из статуса, полученного от backend."""
+    buttons = []
+
+    if status == "active":
+        buttons.append(
             [
                 InlineKeyboardButton(
                     text=format_subscription_button(subscription_id, days_left),
                     callback_data=f"{VPN_PANEL_PREFIX}active:{subscription_id}",
                 )
-            ],
-            [InlineKeyboardButton(text=BTN_INLINE_NEW_SUBSCRIPTION, callback_data=f"{VPN_PANEL_PREFIX}new")],
-            [InlineKeyboardButton(text=BTN_INLINE_BACK_TO_MAIN, callback_data=f"{MAIN_MENU_PREFIX}back")],
-        ]
-    )
+            ]
+        )
+        buttons.append([InlineKeyboardButton(text=BTN_INLINE_PAY, callback_data=f"{VPN_PANEL_PREFIX}pay:{subscription_id}")])
+    elif status == "expired":
+        buttons.append([InlineKeyboardButton(text="🔄 Возобновить подписку", callback_data=f"{VPN_PANEL_PREFIX}pay:{subscription_id}")])
+    elif status == "blocked":
+        buttons.append([InlineKeyboardButton(text="⛔ Подписка заблокирована", callback_data=f"{VPN_PANEL_PREFIX}back_list")])
+    else:  # none
+        buttons.append([InlineKeyboardButton(text=BTN_INLINE_NEW_SUBSCRIPTION, callback_data=f"{VPN_PANEL_PREFIX}new")])
+
+    buttons.append([InlineKeyboardButton(text=BTN_INLINE_BACK_TO_MAIN, callback_data=f"{MAIN_MENU_PREFIX}back")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 def subscription_detail_kb(subscription_id: str) -> InlineKeyboardMarkup:

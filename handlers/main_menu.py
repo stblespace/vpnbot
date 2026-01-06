@@ -12,10 +12,8 @@ from messages import *
 from services.pg_repo import (
     AsyncSessionLocal,
     create_or_extend_subscription,
-    days_left,
-    get_latest_subscription,
-    get_subscription_by_id,
 )
+from services.backend_api import safe_fetch_subscription
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -23,13 +21,11 @@ BASE_SUB_URL = os.getenv("BASE_SUB_URL", "https://stabelspace.ru/sub").rstrip("/
 
 
 async def _subscription_context(user_id: int) -> tuple:
-    async with AsyncSessionLocal() as session:
-        existing = await get_latest_subscription(session, user_id)
-    if existing:
-        sub_id = str(existing["id"])
-        days = days_left(existing["expires_at"])
-        return existing, sub_id, days if days is not None else DEFAULT_SUBSCRIPTION_DAYS_LEFT
-    return None, DEFAULT_SUBSCRIPTION_ID, DEFAULT_SUBSCRIPTION_DAYS_LEFT
+    summary = await safe_fetch_subscription(user_id) or {"status": "none"}
+    status = summary.get("status", "none")
+    sub_id = str(summary.get("subscription_id") or DEFAULT_SUBSCRIPTION_ID)
+    days = summary.get("expires_in_days") if summary.get("expires_in_days") is not None else DEFAULT_SUBSCRIPTION_DAYS_LEFT
+    return summary, sub_id, days
 
 
 def _expiry_from_period(period_code: str) -> datetime:
@@ -38,16 +34,12 @@ def _expiry_from_period(period_code: str) -> datetime:
     return datetime.utcnow() + timedelta(days=days)
 
 
-async def _subscription_detail_payload(subscription_id: str) -> tuple:
-    record = None
-    if subscription_id.isdigit():
-        async with AsyncSessionLocal() as session:
-            record = await get_subscription_by_id(session, int(subscription_id))
-    if record:
-        days = days_left(record["expires_at"]) or 0
-        plan_code = record.get("plan_code", "ind")
-        plan_text = plan_label(plan_code) if callable(plan_label) else plan_code
-        link = f"{BASE_SUB_URL}/{record.get('token')}"
+async def _subscription_detail_payload(user_id: int) -> tuple:
+    summary = await safe_fetch_subscription(user_id)
+    if summary and summary.get("status") in {"active", "expired", "blocked"}:
+        days = summary.get("expires_in_days") or 0
+        plan_text = DEFAULT_SUBSCRIPTION_PLAN
+        link = summary.get("sub_url") or DEFAULT_SUBSCRIPTION_LINK
     else:
         days = DEFAULT_SUBSCRIPTION_DAYS_LEFT
         plan_text = DEFAULT_SUBSCRIPTION_PLAN
@@ -94,10 +86,11 @@ async def inline_menu_handler(callback: CallbackQuery, state: FSMContext) -> Non
 
     if action == "vpn_panel":
         await state.set_state(UserMenuState.vpn_panel)
-        _, sub_id, days_left_value = await _subscription_context(callback.from_user.id)
+        summary, sub_id, days_left_value = await _subscription_context(callback.from_user.id)
+        status = summary.get("status", "none")
         await callback.message.edit_text(
             VPN_PANEL_TEXT,
-            reply_markup=vpn_panel_kb(sub_id, days_left_value),
+            reply_markup=vpn_panel_kb(status, sub_id, days_left_value),
         )
     elif action == "gift":
         await state.set_state(UserMenuState.gift)
@@ -123,7 +116,7 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
     if action.startswith("active:"):
         subscription_id = action.split(":", maxsplit=1)[1] or DEFAULT_SUBSCRIPTION_ID
         await state.set_state(UserMenuState.subscription)
-        plan_text, days_value, link_value = await _subscription_detail_payload(subscription_id)
+        plan_text, days_value, link_value = await _subscription_detail_payload(callback.from_user.id)
         await callback.answer()
         await callback.message.edit_text(
             format_subscription_detail_text(
@@ -139,10 +132,11 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
     elif action == "back_list":
         await state.set_state(UserMenuState.vpn_panel)
         await callback.answer()
-        _, sub_id, days_left_value = await _subscription_context(callback.from_user.id)
+        summary, sub_id, days_left_value = await _subscription_context(callback.from_user.id)
+        status = summary.get("status", "none")
         await callback.message.edit_text(
             VPN_PANEL_TEXT,
-            reply_markup=vpn_panel_kb(sub_id, days_left_value),
+            reply_markup=vpn_panel_kb(status, sub_id, days_left_value),
         )
     elif action.startswith("configure:"):
         subscription_id = action.split(":", maxsplit=1)[1] or DEFAULT_SUBSCRIPTION_ID
@@ -261,7 +255,7 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
     elif action.startswith("back_detail:"):
         subscription_id = action.split(":", maxsplit=1)[1] or DEFAULT_SUBSCRIPTION_ID
         await state.set_state(UserMenuState.subscription)
-        plan_text, days_value, link_value = await _subscription_detail_payload(subscription_id)
+        plan_text, days_value, link_value = await _subscription_detail_payload(callback.from_user.id)
         await callback.answer()
         await callback.message.edit_text(
             format_subscription_detail_text(

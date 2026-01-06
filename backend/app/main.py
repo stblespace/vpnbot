@@ -13,6 +13,7 @@ from starlette.staticfiles import StaticFiles
 from app.api.admin_servers import router as admin_servers_router
 from app.api.auth import router as auth_router
 from app.api.client import router as client_router
+from app.api.bot import router as bot_router
 from app.api.subscription import router as subscription_router
 from app.config import settings
 from app.db import init_db
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
 
     app.include_router(subscription_router)
     app.include_router(auth_router)
+    app.include_router(bot_router)
     app.include_router(client_router)
     app.include_router(admin_servers_router)
     if static_dir.exists():

@@ -16,6 +16,7 @@
 - Nginx фронта: `docs/canonical/nginx/nginx.conf` — `/app` → static, `/api` и `/sub` → FastAPI, отключён кэш HTML/JS/CSS, HTTPS + редирект с HTTP.
 - Docker Compose для backend-сервера: `docs/canonical/docker-compose.yml` — Postgres + FastAPI + Nginx, static монтируется volume, без копирования в образ.
 - Для совместного доступа бота и backend к одной БД сервисы `db` и `backend` подключены к внешней сети `backend_default` (создаётся один раз: `docker network create backend_default`).
+- Бот обращается к backend через API `/api/bot/subscription` (заголовок `X-Bot-Token`), чтобы получать статус подписки из единого источника. Настройте `BACKEND_API_URL` в `.env` бота (по умолчанию `http://backend:8000` внутри docker-сети).
 
 ## База данных (ядро)
 - `users`: `id`, `tg_id`, `uuid`, `is_active`, `role`.
