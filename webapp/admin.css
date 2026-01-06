@@ -1,1 +1,257 @@
-++ webapp/admin.css (unchanged content) 
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&display=swap");
+
+body {
+  font-family: "Manrope", "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.page {
+  max-width: 1100px;
+  padding-bottom: 48px;
+}
+
+.admin-header {
+  background: linear-gradient(135deg, rgba(109, 211, 255, 0.12), rgba(66, 176, 255, 0.08));
+  border: 1px solid rgba(109, 211, 255, 0.25);
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.admin-header .logo {
+  background: #0f1624;
+  color: var(--text);
+  border: 1px solid rgba(109, 211, 255, 0.3);
+  width: 48px;
+  height: 48px;
+}
+
+.admin-header .title {
+  font-size: 22px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+#servers-card .card-header,
+#form-card .card-header {
+  align-items: flex-start;
+}
+
+.card {
+  padding: 18px;
+  backdrop-filter: blur(12px);
+}
+
+.card-body {
+  margin-top: 16px;
+}
+
+.card + .card {
+  margin-top: 18px;
+}
+
+.card-header .label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.card-header .value.small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.table-wrapper {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.server-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 820px;
+}
+
+.server-table thead th {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border);
+}
+
+.server-table tbody td {
+  padding: 12px 14px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.server-table tbody tr:hover {
+  background: rgba(109, 211, 255, 0.05);
+}
+
+.server-table .muted {
+  text-align: center;
+  color: var(--muted);
+  padding: 18px 0;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switch input {
+  accent-color: var(--accent);
+  transform: scale(1.05);
+}
+
+.badge-table {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.badge-table.enabled {
+  color: var(--success);
+  border-color: rgba(122, 229, 130, 0.6);
+}
+
+.badge-table.disabled {
+  color: var(--danger);
+  border-color: rgba(255, 107, 107, 0.6);
+}
+
+.action-btn.action-small {
+  padding: 10px 12px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+form.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px 16px;
+  align-items: flex-end;
+}
+
+form.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+form.form-grid label span {
+  font-weight: 700;
+  color: var(--text);
+}
+
+form.form-grid input,
+form.form-grid select,
+form.form-grid textarea {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+form.form-grid textarea {
+  min-height: 68px;
+  resize: vertical;
+}
+
+form.form-grid input:focus,
+form.form-grid select:focus,
+form.form-grid textarea:focus {
+  outline: none;
+  border-color: rgba(109, 211, 255, 0.8);
+  box-shadow: 0 0 0 2px rgba(109, 211, 255, 0.16);
+}
+
+label.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+label.checkbox input {
+  width: auto;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.form-actions .action-btn {
+  min-width: 160px;
+}
+
+#refresh-btn {
+  min-width: 120px;
+}
+
+.value, .badge-table {
+  letter-spacing: 0.01em;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.card.highlight {
+  border-color: rgba(109, 211, 255, 0.2);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(109, 211, 255, 0.3);
+}
+
+@media (max-width: 820px) {
+  .card {
+    padding: 14px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .admin-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  form.form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+}

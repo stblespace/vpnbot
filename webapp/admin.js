@@ -1,6 +1,7 @@
 // Админ-интерфейс Telegram WebApp для управления серверами
 const webApp = window.Telegram?.WebApp;
 const apiBase = window.location.origin;
+const INITDATA_STORAGE_KEY = "tg_initData";
 
 const state = {
   initData: "",
@@ -11,6 +12,17 @@ const state = {
 const formEl = document.getElementById("server-form");
 const formTitleEl = document.getElementById("form-title");
 const serversTbody = document.getElementById("servers-tbody");
+
+function resolveInitData() {
+  const queryInit = new URLSearchParams(window.location.search).get("initData");
+  const cachedInit = sessionStorage.getItem(INITDATA_STORAGE_KEY);
+  const tgInit = webApp?.initData;
+  const resolved = tgInit || queryInit || cachedInit || "";
+  if (resolved) {
+    sessionStorage.setItem(INITDATA_STORAGE_KEY, resolved);
+  }
+  return resolved;
+}
 
 function showError(message) {
   webApp?.showAlert?.(message);
@@ -261,8 +273,12 @@ async function bootstrap() {
     return;
   }
   webApp.ready();
-  state.initData = webApp.initData;
+  webApp.expand?.();
+  state.initData = resolveInitData();
   if (!state.initData) {
+    document.getElementById("access-card").hidden = false;
+    document.getElementById("access-message").textContent =
+      "initData не найден. Откройте мини-приложение из Telegram или передайте ?initData=";
     showError("initData не найдено");
     return;
   }

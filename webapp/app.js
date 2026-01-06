@@ -1,7 +1,7 @@
 // Минимальное клиентское приложение Telegram WebApp без фреймворков
-
 const webApp = window.Telegram?.WebApp;
 const apiBase = window.location.origin; // предполагается тот же домен, что и backend
+const INITDATA_STORAGE_KEY = "tg_initData";
 
 const tabsContent = {
   windows: `1) Скачайте v2rayN: https://github.com/2dust/v2rayN/releases
@@ -61,6 +61,17 @@ async function apiGetSubscription(initData) {
     throw new Error(`Ошибка загрузки подписки: ${text}`);
   }
   return res.json();
+}
+
+function resolveInitData() {
+  const queryInit = new URLSearchParams(window.location.search).get("initData");
+  const cachedInit = sessionStorage.getItem(INITDATA_STORAGE_KEY);
+  const tgInit = webApp?.initData;
+  const resolved = tgInit || queryInit || cachedInit || "";
+  if (resolved) {
+    sessionStorage.setItem(INITDATA_STORAGE_KEY, resolved);
+  }
+  return resolved;
 }
 
 function showError(message) {
@@ -123,9 +134,10 @@ async function init() {
     return;
   }
   webApp.ready();
-  const initData = webApp.initData;
+  webApp.expand?.();
+  const initData = resolveInitData();
   if (!initData) {
-    showError("initData не найдено");
+    showError("initData не найдено. Откройте мини‑приложение из Telegram.");
     return;
   }
 
