@@ -63,6 +63,7 @@ class SubscriptionService:
         result = await self.session.execute(stmt)
         servers = list(result.scalars().all())
         if not servers:
+            logger.error("Нет активных серверов для генерации конфигурации")
             raise NoActiveServers("Нет активных серверов")
         return servers
 

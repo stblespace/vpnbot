@@ -21,7 +21,7 @@ class ServerBase(BaseModel):
     port: int = Field(..., ge=1, le=65535)
     network: str
     public_key: str
-    sni: str | None = None
+    sni: str = Field(..., min_length=1, max_length=255)
     short_id: str = Field(..., min_length=1, max_length=32)
     protocol: str = "vless"
     enabled: bool = True
@@ -38,14 +38,14 @@ class ServerUpdate(BaseModel):
     port: int | None = Field(None, ge=1, le=65535)
     network: str | None = None
     public_key: str | None = None
-    sni: str | None = None
+    sni: str | None = Field(None, min_length=1, max_length=255)
+    short_id: str | None = Field(None, min_length=1, max_length=32)
     protocol: str | None = None
     enabled: bool | None = None
 
 
 class ServerResponse(ServerBase):
     id: int
-    short_id: str | None = None
     created_at: datetime | None = None
 
     class Config:
