@@ -17,6 +17,7 @@ services:
       retries: 5
     networks:
       - internal
+      - backend_default
 
   backend:
     build:
@@ -30,6 +31,7 @@ services:
     restart: unless-stopped
     networks:
       - internal
+      - backend_default
 
   nginx:
     image: nginx:stable
@@ -54,3 +56,5 @@ volumes:
 networks:
   edge:
   internal:
+  backend_default:
+    external: true

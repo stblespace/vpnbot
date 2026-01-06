@@ -15,6 +15,7 @@
 - Xray Reality: `docs/canonical/xray-config.json` — слушает 443/tcp, принимает любой UUID, Reality shortId/SNI из БД.
 - Nginx фронта: `docs/canonical/nginx/nginx.conf` — `/app` → static, `/api` и `/sub` → FastAPI, отключён кэш HTML/JS/CSS, HTTPS + редирект с HTTP.
 - Docker Compose для backend-сервера: `docs/canonical/docker-compose.yml` — Postgres + FastAPI + Nginx, static монтируется volume, без копирования в образ.
+- Для совместного доступа бота и backend к одной БД сервисы `db` и `backend` подключены к внешней сети `backend_default` (создаётся один раз: `docker network create backend_default`).
 
 ## База данных (ядро)
 - `users`: `id`, `tg_id`, `uuid`, `is_active`, `role`.
@@ -83,6 +84,7 @@
    docker compose -f docs/canonical/docker-compose.yml logs -f backend # просмотр логов
    ```
 5. Почему volume для webapp: `../../backend/webapp` монтируется в `/usr/share/nginx/html/app` (см. compose), поэтому любые изменения статики видны сразу без rebuild образов.
+6. Если используется bot из корневого `docker-compose.yml`, убедитесь что сеть `backend_default` создана (`docker network create backend_default`), чтобы bot и backend делили одну БД.
 
 ## Деплой по шагам
 1) **Backend-сервер**  
