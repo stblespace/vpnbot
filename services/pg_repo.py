@@ -1,15 +1,17 @@
 """Работа с Postgres той же БД, что и backend."""
 import logging
+import os
 import secrets
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, select
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
@@ -32,10 +34,12 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tg_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
-    uuid: Mapped[str] = mapped_column(String(64), unique=True)
-    role: Mapped[str] = mapped_column(String(16), default="user")
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    tg_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True, nullable=False)
+    uuid: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4
+    )
+    role: Mapped[str] = mapped_column(String(16), default="user", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
 class Subscription(Base):
@@ -58,7 +62,7 @@ async def ensure_user(session: AsyncSession, tg_id: int) -> User:
     user = result.scalar_one_or_none()
     if user:
         return user
-    user = User(tg_id=tg_id, uuid=secrets.token_hex(16))
+    user = User(tg_id=tg_id, uuid=uuid.uuid4())
     session.add(user)
     await session.commit()
     await session.refresh(user)
