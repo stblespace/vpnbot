@@ -129,7 +129,13 @@ async def vpn_panel_actions(callback: CallbackQuery, state: FSMContext) -> None:
             reply_markup=subscription_detail_kb(subscription_id),
         )
     elif action == "new":
-        await callback.answer(NEW_SUBSCRIPTION_STUB, show_alert=True)
+        subscription_id = DEFAULT_SUBSCRIPTION_ID
+        await state.set_state(UserMenuState.pay)
+        await callback.answer()
+        await callback.message.edit_text(
+            format_pay_subscription_text(subscription_id),
+            reply_markup=pay_subscription_kb(subscription_id),
+        )
     elif action == "back_list":
         await state.set_state(UserMenuState.vpn_panel)
         await callback.answer()
