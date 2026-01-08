@@ -14,6 +14,7 @@ class Server(Base):
     port = Column(Integer, nullable=False)
     protocol = Column(String(32), nullable=False, default="vless")
     network = Column(String(16), nullable=False)  # tcp | ws | xhttp
+    inbound_id = Column(Integer, nullable=True, index=True)  # ID инбаунда в 3X-UI
     public_key = Column(String(255), nullable=False)
     sni = Column(String(255), nullable=True)
     short_id = Column(String(32), nullable=False, default="")  # Reality shortId

@@ -1,5 +1,7 @@
 """Создание и продление подписок через бота."""
 import logging
+import sys
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -13,6 +15,17 @@ from bot.services.token_generator import generate_token
 from bot.services.user_service import User
 
 logger = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+BACKEND_DIR = BASE_DIR / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.append(str(BACKEND_DIR))
+
+try:
+    from app.services.xui_sync import ensure_user_enabled
+except Exception:
+    ensure_user_enabled = None  # type: ignore
+    logger.warning("Интеграция с 3X-UI недоступна, клиенты не будут синхронизированы")
 
 
 class Subscription(Base):
@@ -76,6 +89,15 @@ class SubscriptionService:
 
         await self.session.commit()
         await self.session.refresh(subscription)
+        if ensure_user_enabled and user.is_active and subscription.is_active:
+            try:
+                await ensure_user_enabled(self.session, str(user.uuid))
+            except Exception as exc:
+                logger.exception(
+                    "Не удалось синхронизировать клиента в 3X-UI",
+                    exc_info=exc,
+                    extra={"user_id": user.id, "subscription_id": subscription.id},
+                )
         return subscription
 
     def build_subscription_url(self, token: str) -> str:

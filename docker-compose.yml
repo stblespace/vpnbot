@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   bot:
     build: .
@@ -8,20 +10,56 @@ services:
       REDIS_PORT: "6379"
     depends_on:
       - redis
+      - backend
     restart: unless-stopped
-    networks:
-      - backend_net
+
+  backend:
+    build: ./backend
+    env_file:
+      - backend/.env
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vpn_user
+      POSTGRES_PASSWORD: vpn_pass
+      POSTGRES_DB: vpn_subscriptions
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  xui:
+    build:
+      context: ./3x-ui
+      dockerfile: ./Dockerfile
+    container_name: 3xui_app
+    volumes:
+      - xui_db:/etc/x-ui/
+      - xui_cert:/root/cert/
+    environment:
+      XRAY_VMESS_AEAD_FORCED: "false"
+      XUI_ENABLE_FAIL2BAN: "true"
+    ports:
+      - "2053:2053"
+    restart: unless-stopped
 
 volumes:
   redis_data:
-
-networks:
-  backend_net:
-    name: backend_default
-    external: true
+  db_data:
+  xui_db:
+  xui_cert:

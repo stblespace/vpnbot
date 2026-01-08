@@ -61,7 +61,11 @@ class SubscriptionService:
     async def _get_enabled_servers(self) -> List[Server]:
         stmt = select(Server).where(Server.enabled.is_(True))
         result = await self.session.execute(stmt)
-        servers = list(result.scalars().all())
+        raw_servers = list(result.scalars().all())
+        servers = [server for server in raw_servers if server.inbound_id is not None]
+        skipped = len(raw_servers) - len(servers)
+        if skipped:
+            logger.warning("Серверы без inbound_id пропущены из выдачи", extra={"skipped": skipped})
         if not servers:
             logger.error("Нет активных серверов для генерации конфигурации")
             raise NoActiveServers("Нет активных серверов")
@@ -101,7 +105,7 @@ class SubscriptionService:
         return sub
 
     async def _get_enabled_servers_count(self) -> int:
-        stmt = select(func.count(Server.id)).where(Server.enabled.is_(True))
+        stmt = select(func.count(Server.id)).where(Server.enabled.is_(True)).where(Server.inbound_id.is_not(None))
         result = await self.session.execute(stmt)
         return int(result.scalar_one() or 0)
 

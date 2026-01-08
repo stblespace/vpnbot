@@ -20,6 +20,7 @@ class ServerBase(BaseModel):
     host: str
     port: int = Field(..., ge=1, le=65535)
     network: str
+    inbound_id: int | None = Field(None, ge=1)
     public_key: str
     sni: str = Field(..., min_length=1, max_length=255)
     short_id: str = Field(..., min_length=1, max_length=32)
@@ -37,6 +38,7 @@ class ServerUpdate(BaseModel):
     host: str | None = None
     port: int | None = Field(None, ge=1, le=65535)
     network: str | None = None
+    inbound_id: int | None = Field(None, ge=1)
     public_key: str | None = None
     sni: str | None = Field(None, min_length=1, max_length=255)
     short_id: str | None = Field(None, min_length=1, max_length=32)

@@ -7,10 +7,12 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 
-from sqlalchemy import update
+from sqlalchemy import select, update
 
 from app.db import AsyncSessionLocal
-from app.models import Subscription
+from app.models import Subscription, User
+from app.services.xui_client import XUIClient
+from app.services.xui_sync import ensure_user_disabled
 
 logger = logging.getLogger(__name__)
 
@@ -19,19 +21,45 @@ async def deactivate_expired_subscriptions() -> None:
     """Однократно деактивировать все истекшие подписки."""
     now = datetime.now(timezone.utc)
     async with AsyncSessionLocal() as session:
-        stmt = (
-            update(Subscription)
+        select_stmt = (
+            select(Subscription.id, Subscription.user_id, User.uuid)
+            .join(User, User.id == Subscription.user_id)
             .where(Subscription.expires_at < now)
             .where(Subscription.is_active.is_(True))
-            .values(is_active=False)
         )
-        result = await session.execute(stmt)
+        expired = list((await session.execute(select_stmt)).all())
+        expired_ids = [row.id for row in expired]
+
+        if not expired_ids:
+            logger.info("Истекших подписок не найдено")
+            return
+
+        update_stmt = update(Subscription).where(Subscription.id.in_(expired_ids)).values(is_active=False)
+        await session.execute(update_stmt)
         await session.commit()
-        affected = result.rowcount or 0
-    if affected:
-        logger.info("Деактивированы истекшие подписки", extra={"count": affected})
-    else:
-        logger.info("Истекших подписок не найдено")
+        logger.info("Деактивированы истекшие подписки", extra={"count": len(expired_ids)})
+
+        client = XUIClient()
+        try:
+            for row in expired:
+                user_uuid = getattr(row, "uuid", None)
+                if not user_uuid:
+                    continue
+                try:
+                    await ensure_user_disabled(
+                        session,
+                        str(user_uuid),
+                        include_disabled_servers=True,
+                        xui_client=client,
+                    )
+                except Exception as exc:
+                    logger.exception(
+                        "Не удалось отключить клиента в 3X-UI",
+                        exc_info=exc,
+                        extra={"subscription_id": row.id, "user_id": row.user_id},
+                    )
+        finally:
+            await client.close()
 
 
 async def expired_subscriptions_loop(interval_hours: int = 24) -> None:

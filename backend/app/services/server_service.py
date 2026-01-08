@@ -29,7 +29,15 @@ class ServerService:
         self.session.add(server)
         await self.session.commit()
         await self.session.refresh(server)
-        logger.info("Создан сервер", extra={"server_id": server.id, "host": server.host, "network": server.network})
+        logger.info(
+            "Создан сервер",
+            extra={
+                "server_id": server.id,
+                "host": server.host,
+                "network": server.network,
+                "inbound_id": server.inbound_id,
+            },
+        )
         return server
 
     async def _get_server(self, server_id: int) -> Server:
@@ -45,7 +53,10 @@ class ServerService:
             setattr(server, field, value)
         await self.session.commit()
         await self.session.refresh(server)
-        logger.info("Обновлен сервер", extra={"server_id": server.id, "host": server.host})
+        logger.info(
+            "Обновлен сервер",
+            extra={"server_id": server.id, "host": server.host, "inbound_id": server.inbound_id},
+        )
         return server
 
     async def delete_server(self, server_id: int) -> None:

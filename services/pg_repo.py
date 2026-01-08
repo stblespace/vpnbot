@@ -1,11 +1,13 @@
 """Работа с Postgres той же БД, что и backend."""
 import logging
 import os
+import sys
 import secrets
 import uuid as uuid_module
 from datetime import datetime, timezone
 from datetime import timedelta
 from typing import Optional
+from pathlib import Path
 
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, select
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -17,6 +19,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+BACKEND_DIR = BASE_DIR / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.append(str(BACKEND_DIR))
+
+try:
+    from app.services.xui_sync import ensure_user_enabled
+except Exception:
+    ensure_user_enabled = None  # type: ignore
+    logger.warning("Не удалось импортировать интеграцию с 3X-UI, операции XUI будут пропущены")
 
 
 class Base(DeclarativeBase):
@@ -160,6 +173,15 @@ async def create_or_extend_subscription(session: AsyncSession, tg_id: int, expir
             "expires_at": sub.expires_at.isoformat(),
         },
     )
+    if ensure_user_enabled and user.is_active and sub.is_active:
+        try:
+            await ensure_user_enabled(session, str(user.uuid))
+        except Exception as exc:
+            logger.exception(
+                "Не удалось синхронизировать клиента в 3X-UI",
+                exc_info=exc,
+                extra={"user_id": user.id, "subscription_id": sub.id},
+            )
     return _subscription_to_dict(sub)
 
 
